@@ -7,26 +7,21 @@ namespace Latte {
 
 template<class L, class R>
 class Either {
-
     template<class LT> struct Left_  { const LT value; };
     template<class RT> struct Right_ { const RT value; };
 
     const bool is_left_;
-
     union { const Left_<L> left_; const Right_<R> right_; };
 
     const L& left()  const { return left_.value; }
     const R& right() const { return right_.value; }
-
     Either(const Left_<L>& value) : is_left_{true},  left_{value} {}
     Either(const Right_<R>& value) : is_left_{false}, right_{value} {}
-
     Either(Left_<L>&& value) : is_left_{true},  left_{std::move(value)} {}
     Either(Right_<R>&& value) : is_left_{false}, right_{std::move(value)} {}
 
     public: static auto Left(const L& value)  { return Either<L, R>{Left_<L>{value}}; }
     public: static auto Right(const R& value) { return Either<L, R>{Right_<R>{value}}; }
-
     public: static auto Left(L&& value)  { return Either<L, R>{Left_<L>{value}}; }
     public: static auto Right(R&& value) { return Either<L, R>{Right_<R>{value}}; }
 
