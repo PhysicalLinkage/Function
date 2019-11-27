@@ -75,7 +75,6 @@ int main() {
     result(get(array, 2)
         .fmap(log_int)
         .bind(is_zero)
-        .reverse()
         .fmap(log)
         .merge(id)(id));
 

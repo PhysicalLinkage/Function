@@ -50,16 +50,11 @@ class either {
         return is_left_ ? E{left{left_.value}} : f(right_.value);
     }
 
-    public: template<class LF> 
-    const auto merge(const LF& left_f) const {
+    public: template<class F> 
+    const auto merge(const F& left_f) const {
         return [this, &left_f](const auto& right_f) {
             return is_left_ ? left_f(left_.value): right_f(right_.value);
         };
-    }
-
-    public: const auto reverse() const {
-        using E = either<R, L>;
-        return is_left_ ? E{left{left_.value}} : E{right{right_.value}};
     }
 };
 
