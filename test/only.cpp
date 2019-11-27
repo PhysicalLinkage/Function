@@ -2,8 +2,10 @@
 
 using namespace Latte;
 
-int main() {
+class Only;
 
+int main() {
+    
 	return 0;
 }
 
