@@ -46,21 +46,21 @@ int main() {
     start("get(array, 4)");
     result(get(array, 4)
         .fmap(log_int)
-        .merge(error, to_string));
+        .merge(error)(to_string));
     
     start("get(array, 100)");
     result(get(array, 100)
         .fmap(log_int)
-        .merge(error, to_string));
+        .merge(error)(to_string));
 
     start("is_0(0)");
     result(is_zero(0)
         .fmap(log)
-        .merge(id, id));
+        .merge(id)(id));
     start("is_0(10)");
     result(is_zero(10)
         .fmap(log)
-        .merge(id, id));
+        .merge(id)(id));
 
     start("get bind is_zero");
     result(get(array, 3)
@@ -69,7 +69,7 @@ int main() {
         .fmap(log_int)
         .bind(is_zero)
         .fmap(log)
-        .merge(id, id));
+        .merge(id)(id));
 
     start("get bind is_zero take2");
     result(get(array, 2)
@@ -77,7 +77,7 @@ int main() {
         .bind(is_zero)
         .reverse()
         .fmap(log)
-        .merge(id, id));
+        .merge(id)(id));
 
     return 0;
 

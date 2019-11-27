@@ -40,21 +40,24 @@ class either {
         }
     }
 
-    public: template<class F> auto fmap(const F& f) const {
+    public: template<class F> const auto fmap(const F& f) const {
         using E = either<L, decltype(f(right_.value))>;
         return is_left_ ? E{left{left_.value}} : E{right{f(right_.value)}};
     }
 
-    public: template<class F> auto bind(const F& f) const {
+    public: template<class F> const auto bind(const F& f) const {
         using E = decltype(f(right_.value));
         return is_left_ ? E{left{left_.value}} : f(right_.value);
     }
 
-    public: template<class LF, class RF> auto merge(const LF& left_f, const RF& right_f) const {
-        return is_left_ ? left_f(left_.value): right_f(right_.value);
+    public: template<class LF> 
+    const auto merge(const LF& left_f) const {
+        return [this, &left_f](const auto& right_f) {
+            return is_left_ ? left_f(left_.value): right_f(right_.value);
+        };
     }
 
-    public: auto reverse() const {
+    public: const auto reverse() const {
         using E = either<R, L>;
         return is_left_ ? E{left{left_.value}} : E{right{right_.value}};
     }
