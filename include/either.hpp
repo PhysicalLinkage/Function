@@ -22,7 +22,7 @@ class either {
     const bool is_left_;
     const union { const left<L> left_; const right<R> right_; };
 
-    public: either(const left <L>& left) : is_left_{true},  left_ {left} {}
+    public: either(const left <L>& left)  : is_left_{true},  left_ {left } {}
     public: either(const right<R>& right) : is_left_{false}, right_{right} {}
 
     public: ~either() {
@@ -33,11 +33,8 @@ class either {
         }
     }
 
-    public: const bool is_left () const { return  is_left_; }
-    public: const bool is_right() const { return !is_left(); }
-
-    public: either(const either& other) : is_left_{other.is_left()} {
-        if (other.is_left()) {
+    public: either(const either& other) : is_left_{other.is_left_} {
+        if (other.is_left_) {
             new (const_cast<L*>(&left_ .value))L{other.left_ .value}; 
         } else {
             new (const_cast<R*>(&right_.value))R{other.right_.value};
@@ -46,21 +43,21 @@ class either {
 
     public: template<class F> auto fmap(const F& f) const {
         using E = either<L, decltype(f(right_.value))>;
-        return is_left() ? E{left{left_.value}} : E{right{f(right_.value)}};
+        return is_left_ ? E{left{left_.value}} : E{right{f(right_.value)}};
     }
 
     public: template<class F> auto bind(const F& f) const {
         using E = decltype(f(right_.value));
-        return is_left() ? E{left{left_.value}} : f(right_.value);
+        return is_left_ ? E{left{left_.value}} : f(right_.value);
     }
 
     public: template<class LF, class RF> auto merge(const LF& left_f, const RF& right_f) const {
-        return is_left() ? left_f(left_.value): right_f(right_.value);
+        return is_left_ ? left_f(left_.value): right_f(right_.value);
     }
 
     public: auto reverse() const {
         using E = either<R, L>;
-        return is_left() ? E{left{left_.value}} : E{right{right_.value}};
+        return is_left_ ? E{left{left_.value}} : E{right{right_.value}};
     }
 };
 
