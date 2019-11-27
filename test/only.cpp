@@ -2,7 +2,7 @@
 
 using namespace Latte;
 
-class Only;
+class only;
 
 int main() {
     

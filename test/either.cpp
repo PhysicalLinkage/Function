@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <vector>
 
-using namespace Latte;
+using namespace latte;
 
 int main() {
 
@@ -30,15 +30,15 @@ int main() {
     };
 
     const auto get = [is_range](const std::vector<int>& vector, const size_t index) {
-        using ErrorOrInt = Either<std::string, int>;
+        using error_or_number = either<std::string, int>;
         return is_range(0, index, vector.size()) ?
-            ErrorOrInt::Right(vector[index]) :
-            ErrorOrInt::Left("'" + std::to_string(index) + "' is out of range");
+            error_or_number::right(vector[index]) :
+            error_or_number::left("'" + std::to_string(index) + "' is out of range");
     };
 
     const auto is_zero = [](const auto x) {
-        using SorS = Either<std::string, std::string>;
-        return !(x == 0) ? SorS::Left("false") : SorS::Right("true");
+        using string_or_string = either<std::string, std::string>;
+        return !(x == 0) ? string_or_string::left("false") : string_or_string::right("true");
     };
     
     const std::vector<int> array{0, 1, 2, 3, 4, 5};
@@ -80,6 +80,7 @@ int main() {
         .merge(id, id));
 
     return 0;
+
 }
 
 
