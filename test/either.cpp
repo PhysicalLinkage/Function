@@ -1,6 +1,5 @@
 #include <either.hpp>
 
-
 #include <iostream>
 #include <algorithm>
 #include <vector>
@@ -30,15 +29,16 @@ int main() {
     };
 
     const auto get = [is_range](const std::vector<int>& vector, const size_t index) {
-        using error_or_number = either<std::string, int>;
+        using E = either<std::string, int>;
         return is_range(0, index, vector.size()) ?
-            error_or_number::right(vector[index]) :
-            error_or_number::left("'" + std::to_string(index) + "' is out of range");
+            E{right{vector[index]}} :
+            E{left{"'" + std::to_string(index) + "' is out of range"}};
     };
 
     const auto is_zero = [](const auto x) {
-        using string_or_string = either<std::string, std::string>;
-        return !(x == 0) ? string_or_string::left("false") : string_or_string::right("true");
+        using S = std::string;
+        using E = either<S, S>;
+        return !(x == 0) ? E{left{S{"false"}}} : E{right{S{"true"}}};
     };
     
     const std::vector<int> array{0, 1, 2, 3, 4, 5};

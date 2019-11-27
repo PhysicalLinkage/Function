@@ -6,8 +6,15 @@
 
 namespace latte {
 
-template<class LT> struct left  { const LT value; };
-template<class RT> struct right { const RT value; };
+template<class T> struct left  { 
+    const T value;
+    left(const T& value_) : value{value_} {}
+};
+
+template<class T> struct right { 
+    const T value;
+    right(const T& value_) : value{value_} {} 
+};
 
 template<class L, class R>
 class either {
@@ -15,11 +22,8 @@ class either {
     const bool is_left_;
     const union { const left<L> left_; const right<R> right_; };
 
-    either(const left <L>& left) : is_left_{true},  left_ {left} {}
-    either(const right<R>& right) : is_left_{false}, right_{right} {}
-
-    public: static auto left (L value) { return either<L, R>{ latte::left <L>{value}}; }
-    public: static auto right(R value) { return either<L, R>{ latte::right<R>{value}}; }
+    public: either(const left <L>& left) : is_left_{true},  left_ {left} {}
+    public: either(const right<R>& right) : is_left_{false}, right_{right} {}
 
     public: ~either() {
         if (is_left_) {
@@ -41,13 +45,13 @@ class either {
     }
 
     public: template<class F> auto fmap(const F& f) const {
-        using next_either = either<L, decltype(f(right_.value))>;
-        return is_left() ? next_either::left(left_.value) : next_either::right(f(right_.value));
+        using E = either<L, decltype(f(right_.value))>;
+        return is_left() ? E{left{left_.value}} : E{right{f(right_.value)}};
     }
 
     public: template<class F> auto bind(const F& f) const {
-        using next_either = decltype(f(right_.value));
-        return is_left() ? next_either::left(left_.value) : f(right_.value);
+        using E = decltype(f(right_.value));
+        return is_left() ? E{left{left_.value}} : f(right_.value);
     }
 
     public: template<class LF, class RF> auto merge(const LF& left_f, const RF& right_f) const {
@@ -55,8 +59,8 @@ class either {
     }
 
     public: auto reverse() const {
-        using next_either = either<R, L>;
-        return is_left() ? next_either::right(left_.value) : next_either::left(right_.value);
+        using E = either<R, L>;
+        return is_left() ? E{left{left_.value}} : E{right{right_.value}};
     }
 };
 
