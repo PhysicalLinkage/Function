@@ -24,20 +24,19 @@ class either {
 
     public: either(const left <L>& left)  : is_left_{true},  left_ {left } {}
     public: either(const right<R>& right) : is_left_{false}, right_{right} {}
+    public: either(const either& other)   : is_left_{other.is_left_} {
+        if (other.is_left_) {
+            new (const_cast<L*>(&left_ .value))L{other.left_ .value}; 
+        } else {
+            new (const_cast<R*>(&right_.value))R{other.right_.value};
+        }
+    }
 
     public: ~either() {
         if (is_left_) {
             left_.value.~L();
         } else {
             right_.value.~R();
-        }
-    }
-
-    public: either(const either& other) : is_left_{other.is_left_} {
-        if (other.is_left_) {
-            new (const_cast<L*>(&left_ .value))L{other.left_ .value}; 
-        } else {
-            new (const_cast<R*>(&right_.value))R{other.right_.value};
         }
     }
 
