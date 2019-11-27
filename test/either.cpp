@@ -1,5 +1,6 @@
 #include <either.hpp>
 
+
 #include <iostream>
 #include <algorithm>
 #include <vector>
@@ -12,7 +13,7 @@ int main() {
     
     const auto log = [](const std::string& x) { std::cout << "log : " << x << "\n"; return x; };
 
-    const auto log_int = [log](const int x) { std::cout << "log : " << std::to_string(x) << "\n"; return x; };
+    const auto log_int = [](const int x) { std::cout << "log : " << std::to_string(x) << "\n"; return x; };
 
     const auto add = [](const auto a) { return [a](const auto b) { return a + b; }; };
 
