@@ -6,6 +6,10 @@
 
 namespace latte {
 
+template<class X> const auto functionalization(const X& x) { 
+    return [&x](const auto& f) { return f(x); };
+};
+
 template<class T> struct left  { 
     const T value;
     left(const T& value_) : value{value_} {}
@@ -45,9 +49,21 @@ class either {
         return is_left_ ? E{left{left_.value}} : E{right{f(right_.value)}};
     }
 
+    public: template<class Applicative> 
+    const auto operator<<(const Applicative& m_a) const {
+        return fmap([&m_a](const R& a_to_b) {
+            return m_a.fmap(functionalization)(a_to_b);
+        });
+    }
+
+
     public: template<class F> const auto bind(const F& f) const {
         using E = decltype(f(right_.value));
         return is_left_ ? E{left{left_.value}} : f(right_.value);
+    }
+
+    public: template<class F> const auto operator>>=(const F& f) const { 
+        return bind(f); 
     }
 
     public: template<class F> 
@@ -56,6 +72,11 @@ class either {
             return is_left_ ? left_f(left_.value): right_f(right_.value);
         };
     }
+};
+
+template<class Functor, class F> 
+const auto operator^(const F& a_to_b,  const Functor& m_a) noexcept {
+    return m_a.fmap(a_to_b);
 };
 
 }

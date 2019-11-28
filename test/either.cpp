@@ -63,11 +63,11 @@ int main() {
         .merge(id)(id));
 
     start("get bind is_zero");
-    result(get(array, 3)
+    result((get(array, 3)
         .fmap(log_int)
         .fmap(add(-3))
         .fmap(log_int)
-        .bind(is_zero)
+         >>= is_zero)
         .fmap(log)
         .merge(id)(id));
 
