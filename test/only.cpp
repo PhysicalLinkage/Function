@@ -1,88 +1,51 @@
 #include <either.hpp>
-#include <limits>
 
 namespace latte {
 
 namespace private_ {
 
-template<class T, std::size_t ID = std::numeric_limits<std::size_t>::max()>
-struct distinguisher { const T value; };
-
-template<std::size_t ID, class T1, class T2, class... Ts>
-class only_ {
-    using L = distinguisher<T1, ID>;
-    using R = only_<ID + 1, T2, Ts...>;
-    using E = either<L, R>;
-
-    E either_;
-    
-    public: template<class T>
-    only_(const T& value, std::size_t id = std::numeric_limits<std::size_t>::max()) 
-        : either_{(id == ID) ? 
-            E{left {L{value}}}: 
-            E{right{R{value, id}}}} {}
-    public:
-    only_(const only_& other) : either_{other.either_} {}
-   
-    public: template<class F>
-    const auto fmap(const F& f) const {
-        return either_.fmap([&f](const R& only_) { return only_.fmap(f); });
-    }
-
-    public: template<class F>
-    const auto bind(const F& f) const {
-        return either_.bind([&f](const R& only_) { return only_.bind(f); });
-    };
-
-    public: template<class F1, class F2, class... Fs>
-    auto merge(const F1& f, const F2& next_f, const Fs&... fs) {
-        const auto left_f  = [&f](const L& dist) { return f(dist.value); };
-        const auto right_f = [&](const R& only_) { return only_.merge(next_f, fs...); };
-        return either_.merge(left_f)(right_f);
-    };
-
-            /*
-    public: template<class F>
-    auto merge(const F& left_f) const {
-        return [this, &left_f](const auto& next_f) {
-            const auto right_f = [&next_f](const R& only_) { return only_.merge(next_f); };
-
+template<class F>
+const auto merge_(const F& left_f) {
+    return [&left_f](const auto& right_f) {
+        return [&left_f, &right_f](const auto& either_) { 
+            return (either_.merge(left_f)(right_f)); 
         };
-    }*/
-};
-
-template<std::size_t ID, class L, class R>
-class only_<ID, L, R> {
-    using E = either<L, R>;
-   
-    E either_;
-
-    public: template<class T>
-    only_(const T& value, std::size_t id = std::numeric_limits<std::size_t>::max())
-        : either_{(id == ID) ?
-            E{left {L{value}}}:
-            E{right{value}}} {}
-    public:
-    only_(const only_& other) : either_{other.either_} {}
-
-    public: template<class F> const auto fmap(const F& f) const {
-        return either_.fmap([&f](const R& value) { return f(value); });
-    }
-
-    public: template<class F> const auto bind(const F& f) const {
-        return either_.bind([&f](const R& value) { return f(value); });
     };
-
-    public: template<class LF, class RF>
-    auto merge(const LF& left_f, const RF& right_f) const {
-        return either_.merge(left_f)(right_f);
-    }
-};
+}
 
 }
 
-template<class T1, class T2, class... Ts>
-using only = private_::only_<0, T1, T2, Ts...>;
+template<class F>
+const auto merge(const F& left_f) { return private_::merge_(left_f); }
+
+template<class F1, class F2, class F3, class... Fs>
+class merges {
+
+    const F1& f1_;
+    
+    public: merges(const F1& f1) : f1_{f1} {}
+
+    const auto operator()(const F2& f2) {
+        return [this, &f2](const F3& f3) {
+            return merge(f1_)(merge<F2, F3, Fs...>(f2)(f3));
+        };
+    }
+};
+
+template<class F1, class F2, class F3>
+class merges<F1, F2, F3> {
+
+    const F1 f1_;
+
+    public: merges(const F1& f1) : f1_{f1} {}
+
+    const auto operator()(const F2& f2) {
+        return [this, &f2](const F3& f3) {
+            return merge(f1_)(merge(f2)(f3));
+        };
+    };
+
+};
 
 }
 
@@ -92,27 +55,37 @@ using only = private_::only_<0, T1, T2, Ts...>;
 using namespace latte;
 
 int main() {
-    
-    const auto& range_filter = [](const auto& min) {
+
+    using S = std::string;
+    using E1 = either<S, int>;
+    using E = either<S, E1>;
+
+    const auto range_filter = [](const auto& min) {
         using T = decltype(min);
-        return [&min](const T& max) {
+        return [&min](const T& max) { 
             return [&min, &max](const T& x) {
-                using S = std::string;
-                using O = only<S, S, S>;
-                return  
-                    (x < min) ? O{S{"min"}, 0} : 
-                    (x > max) ? O{S{"max"}, 1} :
-                    O{S{"x"}};
+                return  (x < min) ? E{left {S {"min"}}} :
+                        (x > max) ? E{right{E1{left{S{"max"}}}}} :
+                                    E{right{E1{right{x}}}};
             };
         };
     };
 
-    const auto& id = [](const auto& x) { return x; };
+    const auto id = [](const auto& x) { return x; };
+    const auto to_string = [](const auto& x) { return std::to_string(x); };
 
-    std::cout << range_filter(0)(10)(-4).merge(id, id, id) << "\n";
-    std::cout << range_filter(0)(10)(4).merge(id, id, id) << "\n";
-    std::cout << range_filter(0)(10)(48).merge(id, id, id) << "\n";
+    const auto O_10 = range_filter(0)(10);
 
-	return 0;
+    using ID        = decltype(id);
+    using TO_STRING = decltype(to_string);
+    using Merges    = merges<ID, ID, TO_STRING>;
+
+    std::cout << Merges(id)(id)(to_string)((O_10)(-5)) << "\n";
+    std::cout << Merges(id)(id)(to_string)((O_10)( 5)) << "\n";
+    std::cout << Merges(id)(id)(to_string)((O_10)(15)) << "\n";
+
+    //x.merge(id)(merge(id)(merge(id)(merge(id)(id))));
+
+    return 0;
 }
 
