@@ -97,8 +97,8 @@ using namespace latte;
 const auto is_zero = [](const int& x) {
     using e = either<std::string, int>;
     return (x == 0) ?
-        e{right{0}} :
-        e{left{std::string{"ok"}}};
+        e::right(0) :
+        e::left("ok");
 };
         
 
@@ -111,7 +111,7 @@ int main() {
 
     log > log < 3;
     
-    const auto e = either<std::string, int>{right{10}};
+    const auto e = either<std::string, int>::right(10);
 
     log << e;
 

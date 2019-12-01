@@ -6,68 +6,66 @@
 
 namespace latte {
 
-template<class T> struct left  { 
-    const T value;
-    left(const T& value_) : value{value_} {}
-};
-template<class T> struct right { 
-    const T value;
-    right(const T& value_) : value{value_} {} 
-};
-
-template<class T> struct wrapper {
-    const T value;
-    wrapper(const T& a) : value(a) {}
-};
-
 template<class L, class R>
 class either {
 
-    const bool is_left_;
-    const union { const left<L> left_; const right<R> right_; };
+    template<class T> struct left_wrapper  { 
+        const T value;
+        left_wrapper(const T& value_) : value{value_} {}
+    };
+    
+    template<class T> struct right_wrapper { 
+        const T value;
+        right_wrapper(const T& value_) : value{value_} {} 
+    };
 
-    public: either(const left <L>& left)  : is_left_{true},  left_ {left } {}
-    public: either(const right<R>& right) : is_left_{false}, right_{right} {}
-    public: either(const either& other)   : is_left_{other.is_left_} {
+    const bool is_left_;
+    const union { const L left_; const R right_; };
+
+    either(const left_wrapper<L>&  wrapper) : is_left_{true},  left_ {wrapper.value} {}
+    either(const right_wrapper<R>& wrapper) : is_left_{false}, right_{wrapper.value} {}
+    either(const either& other)   : is_left_{other.is_left_} {
         if (other.is_left_) {
-            new (const_cast<L*>(&left_ .value))L{other.left_ .value}; 
+            new (const_cast<L*>(&left_))L{other.left_}; 
         } else {
-            new (const_cast<R*>(&right_.value))R{other.right_.value};
+            new (const_cast<R*>(&right_))R{other.right_};
         }
     }
 
+    public: static const auto left (const L& value) { return either( left_wrapper<L>{value}); }
+    public: static const auto right(const R& value) { return either(right_wrapper<R>{value}); }
+
     public: ~either() {
         if (is_left_) {
-            left_.value.~L();
+            left_.~L();
         } else {
-            right_.value.~R();
+            right_.~R();
         }
     }
 
     public: template<class Identity> const auto fmap(const Identity& f) const {
-        using E = either<L, decltype(f(right_.value))>;
-        return is_left_ ? E{left{left_.value}} : E{right{f(right_.value)}};
+        using E = either<L, decltype(f(right_))>;
+        return is_left_ ? E::left(left_) : E::right(f(right_));
     }
 
     public: template<class Applicative> const auto ap(const Applicative& a_x) const {
-        using E = decltype(a_x.fmap(right_.value));
-        return is_left_ ? E{left{left_.value}} : a_x.fmap(right_.value);
+        using E = decltype(a_x.fmap(right_));
+        return is_left_ ? E::left(left_) : a_x.fmap(right_);
     }
 
     public: template<class F> const auto bind(const F& f) const {
-        using E = decltype(f(right_.value));
-        return is_left_ ? E{left{left_.value}} : f(right_.value);
+        using E = decltype(f(right_));
+        return is_left_ ? E::left(left_) : f(right_);
     }
 
     public: template<class F> 
     const auto merge(const F& left_f) const {
         return [this, &left_f](const auto& right_f) {
-            return is_left_ ? left_f(left_.value): right_f(right_.value);
+            return is_left_ ? left_f(left_): right_f(right_);
         };
     }
+
 };
-
-
 
 const auto merge = [](const auto& left) {
     return [&left](const auto& right) {
@@ -76,7 +74,6 @@ const auto merge = [](const auto& left) {
         };
     };
 };
-
 
 }
 
