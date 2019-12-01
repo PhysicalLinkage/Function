@@ -1,7 +1,7 @@
 #!/use/bin/bash
 
 CXX="g++"
-CXXFLAGS="-std=c++2a -Wall -Iinclude"
+CXXFLAGS="-std=c++2a -Iinclude"
 APP="build/`basename $1 | sed 's/\.[^\.]*$//'`.test"
 BUILD="$CXX $CXXFLAGS $1 -o $APP"
 

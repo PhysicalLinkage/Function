@@ -6,18 +6,18 @@
 
 namespace latte {
 
-template<class X> const auto functionalization(const X& x) { 
-    return [&x](const auto& f) { return f(x); };
-};
-
 template<class T> struct left  { 
     const T value;
     left(const T& value_) : value{value_} {}
 };
-
 template<class T> struct right { 
     const T value;
     right(const T& value_) : value{value_} {} 
+};
+
+template<class T> struct wrapper {
+    const T value;
+    wrapper(const T& a) : value(a) {}
 };
 
 template<class L, class R>
@@ -44,26 +44,19 @@ class either {
         }
     }
 
-    public: template<class F> const auto fmap(const F& f) const {
+    public: template<class Identity> const auto fmap(const Identity& f) const {
         using E = either<L, decltype(f(right_.value))>;
         return is_left_ ? E{left{left_.value}} : E{right{f(right_.value)}};
     }
 
-    public: template<class Applicative> 
-    const auto operator<<(const Applicative& m_a) const {
-        return fmap([&m_a](const R& a_to_b) {
-            return m_a.fmap(functionalization)(a_to_b);
-        });
+    public: template<class Applicative> const auto ap(const Applicative& a_x) const {
+        using E = decltype(a_x.fmap(right_.value));
+        return is_left_ ? E{left{left_.value}} : a_x.fmap(right_.value);
     }
-
 
     public: template<class F> const auto bind(const F& f) const {
         using E = decltype(f(right_.value));
         return is_left_ ? E{left{left_.value}} : f(right_.value);
-    }
-
-    public: template<class F> const auto operator>>=(const F& f) const { 
-        return bind(f); 
     }
 
     public: template<class F> 
@@ -74,12 +67,50 @@ class either {
     }
 };
 
-template<class Functor, class F> 
-const auto operator^(const F& a_to_b,  const Functor& m_a) noexcept {
-    return m_a.fmap(a_to_b);
+
+
+const auto merge = [](const auto& left) {
+    return [&left](const auto& right) {
+        return [&left, &right](const auto& either) {
+            return either.merge(left)(right);
+        };
+    };
 };
+
 
 }
 
+/*
+using namespace latte;
+
+int main() {
+
+    const auto lambda_id = id();
+
+    const int x = 10;
+
+    lambda_id >= either<int, id>{right{id()}} <= 10;
+
+    return 0;
+}
+*/
+
 #endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
